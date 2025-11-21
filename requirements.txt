@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+torch          # optional, for transformer
+transformers   # optional, for transformer
+googletrans==4.0.0rc1  # optional, for Urdu translation
