@@ -1,220 +1,159 @@
 # -----------------------------------------------------------
-# AI SOCIAL MEDIA CONTENT CREATOR – VIP CHATBOT
+# AI SOCIAL MEDIA CONTENT CREATOR – CHATBOT EDITION
+# -----------------------------------------------------------
+# ✔ Clean & Responsive UI
+# ✔ Chatbot + Content Generator
+# ✔ Export CSV/JSON
+# ✔ No Voice Features
+# ✔ Fully Works on Streamlit Cloud
 # -----------------------------------------------------------
 
 import streamlit as st
 import pandas as pd
 import random
-import re
-import time
-from datetime import datetime
-
-# Optional transformer model
-MODEL_LOADED = False
-try:
-    from transformers import pipeline
-    MODEL_LOADED = True
-except:
-    MODEL_LOADED = False
-
-# Optional voice
-try:
-    import pyttsx3
-    VOICE_ENABLED = True
-except:
-    VOICE_ENABLED = False
 
 # -----------------------------------------------------------
-# Streamlit Page Config
+# Page config
 # -----------------------------------------------------------
 st.set_page_config(
     page_title="AI SOCIAL MEDIA CONTENT CREATOR",
-    layout="wide",
-    page_icon="✨"
+    layout="wide"
 )
 
 # -----------------------------------------------------------
-# VIP Theme CSS + Glass Style
+# Theme
 # -----------------------------------------------------------
 st.markdown(
     """
     <style>
     .stApp {
-        background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80');
-        background-size: cover;
-        background-attachment: fixed;
-        color: #fff;
+        background-color: #0f0f0f;
+        color: white;
         font-family: 'Segoe UI';
     }
-
-    .glass {
-        background: rgba(0,0,0,0.6);
-        padding: 18px;
-        border-radius: 14px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    .glass-box {
+        background: rgba(0,0,0,0.55);
+        padding: 20px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 0 15px rgba(255,215,0,0.4);
+        margin-bottom: 10px;
     }
-
-    .gold-title {
-        font-size: 36px;
+    .glow-title {
+        font-size: 40px;
         font-weight: 900;
         color: gold;
-        text-shadow: 0 0 12px gold, 0 0 6px rgba(0,0,0,0.6);
-        margin-bottom: 12px;
+        text-shadow: 0 0 15px gold, 0 0 30px #ffdd55;
     }
-
-    .chat-user {
-        background: linear-gradient(90deg,#ffd166,#ffb703);
-        padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 6px;
-        color: black;
-        font-weight: bold;
-    }
-
-    .chat-bot {
-        background: rgba(255,255,255,0.1);
-        padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 6px;
-    }
-
     .stButton>button {
         background: gold !important;
         color: black !important;
         border-radius: 10px;
         font-weight: bold;
-        padding: 8px 16px;
-        box-shadow: 0 0 12px gold;
+        border: none;
+        padding: 10px 20px;
+    }
+    .stTextInput>div>div>input,
+    .stSelectbox>div>div>div,
+    .stTextArea>div>textarea {
+        background: rgba(255,255,255,0.18);
+        color: white !important;
     }
     </style>
-    """, unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True,
 )
 
 # -----------------------------------------------------------
-# Initialize Session State
+# Content generator logic
 # -----------------------------------------------------------
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []  # list of dicts {"role": "user"/"bot", "text": "..."}
-if "projects" not in st.session_state:
-    st.session_state.projects = []  # saved chat sessions
+def generate_content(prompt, count=1):
+    """
+    Generate mock social media content (quotes, captions, hooks)
+    """
+    outputs = []
+    for i in range(count):
+        outputs.append({
+            "content": f"{prompt} #{i+1}: " + random.choice([
+                "Believe in yourself and never give up.",
+                "Success is the sum of small efforts repeated daily.",
+                "Your limitation—it’s only your imagination.",
+                "Push yourself because no one else is going to do it for you.",
+                "Great things never come from comfort zones.",
+                "Dream it. Wish it. Do it.",
+                "Stay positive, work hard, make it happen.",
+                "Don’t stop when you’re tired; stop when you’re done.",
+                "The harder you work for something, the greater you’ll feel when you achieve it.",
+                "Little things make big days."
+            ])
+        })
+    return outputs
 
 # -----------------------------------------------------------
-# Load Local Model (Optional)
+# Simple Chatbot logic
 # -----------------------------------------------------------
-generator_model = None
-if MODEL_LOADED:
-    try:
-        generator_model = pipeline("text-generation", model="distilgpt2")
-    except:
-        generator_model = None
+def chatbot_reply(user_input):
+    """
+    Simple rule-based responses for chat
+    """
+    msg = user_input.lower()
+    if "quote" in msg or "motivational" in msg:
+        return "Sure! Enter the number of quotes you want and click 'Generate'."
+    if "help" in msg:
+        return "Type any topic or command, e.g., 'Write 5 motivational quotes'."
+    return f"I understood: {user_input}. Try asking for quotes or captions!"
 
 # -----------------------------------------------------------
-# Sidebar
+# Tabs
 # -----------------------------------------------------------
-with st.sidebar:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.markdown('<h2 class="gold-title">AI SOCIAL MEDIA CONTENT CREATOR</h2>', unsafe_allow_html=True)
-    tab_option = st.radio("Navigation", ["💬 Chat", "📁 Projects", "📜 History", "⚙️ Settings"])
+tab1, tab2 = st.tabs(["✨ Generator", "🤖 Chatbot"])
+
+# ===========================================================
+# TAB 1 — GENERATOR
+# ===========================================================
+with tab1:
+    st.markdown('<h1 class="glow-title">AI SOCIAL MEDIA CONTENT CREATOR</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+
+    topic = st.text_input("Enter your topic or content idea", "")
+    count = st.number_input("Number of variations", min_value=1, max_value=20, value=5)
+    generate_button = st.button("Generate Content ✨")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-# -----------------------------------------------------------
-# Helper Functions
-# -----------------------------------------------------------
-def generate_reply(prompt):
-    if generator_model:
-        try:
-            output = generator_model(prompt, max_length=120)[0]["generated_text"]
-            return output.strip()
-        except:
-            pass
-    # Fallback template
-    templates = [
-        f"{prompt} - This is a motivational response for social media.",
-        f"Here's what you can post about: {prompt}",
-        f"Quick tip on {prompt}: Engage your audience effectively!",
-        f"{prompt} explained in simple words for your followers."
-    ]
-    return random.choice(templates)
+    if generate_button:
+        if not topic.strip():
+            st.warning("Please enter a topic!")
+        else:
+            results = generate_content(topic, count)
+            for i, data in enumerate(results):
+                st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+                st.write(f"📌 Variation {i+1}: {data['content']}")
+                st.markdown('</div>', unsafe_allow_html=True)
 
-def speak_text(text):
-    if VOICE_ENABLED:
-        engine = pyttsx3.init()
-        engine.say(text)
-        engine.runAndWait()
+            # Export options
+            df = pd.DataFrame(results)
+            st.download_button("Download CSV", df.to_csv(index=False), "content.csv")
+            st.download_button("Download JSON", df.to_json(), "content.json")
 
-# -----------------------------------------------------------
-# CHAT TAB
-# -----------------------------------------------------------
-if tab_option == "💬 Chat":
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.markdown('<h2 class="gold-title">Chat with AI</h2>', unsafe_allow_html=True)
-    st.markdown('<p>Ask anything and get creative social media content or advice!</p>', unsafe_allow_html=True)
+# ===========================================================
+# TAB 2 — CHATBOT
+# ===========================================================
+with tab2:
+    st.markdown('<h1 class="glow-title">AI SOCIAL MEDIA CONTENT CREATOR – Chatbot</h1>', unsafe_allow_html=True)
 
-    user_input = st.text_input("Your Message", key="chat_input")
-    voice_checkbox = st.checkbox("🔊 Voice Response", key="voice_opt")
+    if "history" not in st.session_state:
+        st.session_state.history = []
+
+    user_text = st.text_input("Your Message", "")
 
     if st.button("Send"):
-        if user_input.strip():
-            # Add user message
-            st.session_state.chat_history.append({"role":"user","text":user_input})
-            # Generate bot reply
-            bot_reply = generate_reply(user_input)
-            st.session_state.chat_history.append({"role":"bot","text":bot_reply})
-            # Speak if voice enabled
-            if voice_checkbox:
-                speak_text(bot_reply)
+        if user_text.strip():
+            st.session_state.history.append(("You", user_text))
+            reply = chatbot_reply(user_text)
+            st.session_state.history.append(("AI", reply))
 
-    # Display chat
-    for msg in st.session_state.chat_history[-20:]:  # show last 20 messages
-        if msg["role"]=="user":
-            st.markdown(f'<div class="chat-user">You: {msg["text"]}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="chat-bot">AI: {msg["text"]}</div>', unsafe_allow_html=True)
-
-# -----------------------------------------------------------
-# PROJECTS TAB
-# -----------------------------------------------------------
-elif tab_option == "📁 Projects":
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.markdown('<h2 class="gold-title">Saved Projects</h2>', unsafe_allow_html=True)
-    if st.session_state.projects:
-        for i, proj in enumerate(st.session_state.projects):
-            st.markdown(f"**Project {i+1}:** {proj['title']} • Messages: {len(proj['chat'])}")
-            if st.button(f"Load Project {i+1}", key=f"load_{i}"):
-                st.session_state.chat_history = proj["chat"]
-    else:
-        st.info("No projects saved yet.")
-
-    # Save current chat
-    proj_title = st.text_input("Save Current Chat As:", key="proj_name")
-    if st.button("Save Project"):
-        if proj_title.strip() and st.session_state.chat_history:
-            st.session_state.projects.append({"title":proj_title, "chat":st.session_state.chat_history.copy()})
-            st.success(f"Project '{proj_title}' saved.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# -----------------------------------------------------------
-# HISTORY TAB
-# -----------------------------------------------------------
-elif tab_option == "📜 History":
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.markdown('<h2 class="gold-title">Chat History</h2>', unsafe_allow_html=True)
-    if st.session_state.chat_history:
-        for i, msg in enumerate(st.session_state.chat_history[-50:]):
-            role = "You" if msg["role"]=="user" else "AI"
-            st.markdown(f"**{role}:** {msg['text']}")
-    else:
-        st.info("No history yet.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# -----------------------------------------------------------
-# SETTINGS TAB
-# -----------------------------------------------------------
-elif tab_option == "⚙️ Settings":
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.markdown('<h2 class="gold-title">Settings</h2>', unsafe_allow_html=True)
-    st.markdown('<p>Adjust options for your AI content creator.</p>', unsafe_allow_html=True)
-    st.checkbox("Enable Voice Response", key="voice_setting")
-    st.slider("Font Size", min_value=14, max_value=24, value=16, key="font_size")
-    st.markdown('</div>', unsafe_allow_html=True)
+    for role, msg in st.session_state.history:
+        st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+        st.write(f"**{role}:** {msg}")
+        st.markdown('</div>', unsafe_allow_html=True)
