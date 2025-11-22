@@ -1,8 +1,8 @@
-streamlit==1.25.0
-pandas==2.1.1
-numpy==1.27.0
-torch==2.1.0         # Optional, only needed if you want local transformer model
-transformers==4.35.0 # Optional, for local GPT models
-Pillow==10.1.0       # Optional, if you plan to handle images
+streamlit
+pandas
+numpy
+torch
+transformers
+Pillow
 
 
