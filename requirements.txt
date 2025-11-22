@@ -1,8 +1,5 @@
-streamlit
+streamlit>=1.25.0
 pandas
-numpy
-# Optional for local model (recommended if you want model generation):
 transformers
 torch
-# Pillow may be useful for image handling (optional)
-pillow
+pyttsx3
