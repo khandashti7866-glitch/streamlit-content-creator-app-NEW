@@ -1,83 +1,67 @@
-# -----------------------------------------------------------
-# AI SOCIAL MEDIA CONTENT CREATOR – VIP EDITION
-# -----------------------------------------------------------
-# ✔ Car Background
-# ✔ Gold & Black Premium Theme
-# ✔ Right-Side UI
-# ✔ Generator + Chatbot
-# ✔ Export CSV/JSON
-# ✔ Optional Local Model (distilgpt2)
-# ✔ No API Keys Needed
-# -----------------------------------------------------------
-
+# Updated Streamlit App with Custom Background and UI Enhancements
 import streamlit as st
 import pandas as pd
 import json
 import random
 import re
 
-# Optional model
 try:
     from transformers import pipeline
     MODEL_READY = True
 except:
     MODEL_READY = False
 
-# -----------------------------------------------------------
-# Streamlit Page Config
-# -----------------------------------------------------------
-st.set_page_config(
-    page_title="AI SOCIAL MEDIA CONTENT CREATOR",
-    layout="wide"
-)
+st.set_page_config(page_title="AI SOCIAL MEDIA CONTENT CREATOR", layout="wide")
 
 # -----------------------------------------------------------
-# Car Background + VIP Styling
+# Apply Custom UI Theme and Background
 # -----------------------------------------------------------
 def apply_theme():
     st.markdown(
-        """
+        f"""
         <style>
-        .stApp {
-            background-image: url('https://images.unsplash.com/photo-1511918984145-48de785d4c4b?auto=format&fit=crop&w=1600&q=80');
+        .stApp {{
+            background-image: url('/mnt/data/Wallpaper -www.posintech.com (2).jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             color: white !important;
             font-family: 'Segoe UI';
-        }
+        }}
 
-        .glass-box {
-            background: rgba(0,0,0,0.55);
-            padding: 22px;
-            border-radius: 18px;
-            backdrop-filter: blur(7px);
-            box-shadow: 0 0 18px rgba(255,215,0,0.4);
-        }
+        .glass-box {{
+            background: rgba(0,0,0,0.60);
+            padding: 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 25px rgba(0, 200, 255, 0.35);
+            border: 1px solid rgba(0, 200, 255, 0.45);
+        }}
 
-        .glow-title {
-            font-size: 46px;
+        .glow-title {{
+            font-size: 50px;
             font-weight: 900;
-            color: gold;
-            text-shadow: 0 0 20px gold, 0 0 40px #ffdd55;
-        }
+            color: #00eaff;
+            text-shadow: 0 0 12px #00eaff, 0 0 25px #00aaff;
+        }}
 
-        .stButton>button {
-            background: gold !important;
+        .stButton>button {{
+            background: linear-gradient(90deg,#00ddff,#0099ff) !important;
             color: black !important;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: bold;
             border: none;
-            padding: 10px 20px;
-            box-shadow: 0 0 12px gold;
-        }
+            padding: 10px 22px;
+            box-shadow: 0 0 15px rgba(0,200,255,0.6);
+        }}
 
         .stTextInput>div>div>input,
         .stSelectbox>div>div>div,
-        .stTextArea>div>textarea {
-            background: rgba(255,255,255,0.18);
+        .stTextArea>div>textarea {{
+            background: rgba(255,255,255,0.15);
             color: white !important;
-        }
+            border-radius: 10px;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -85,121 +69,99 @@ def apply_theme():
 
 apply_theme()
 
-# -----------------------------------------------------------
-# Optional Local Model Load
-# -----------------------------------------------------------
-generator_model = None
-
+# Optional model
 if MODEL_READY:
     try:
         generator_model = pipeline("text-generation", model="distilgpt2")
     except:
         generator_model = None
+else:
+    generator_model = None
 
-# -----------------------------------------------------------
-# Template-Based Generator (Fallback)
-# -----------------------------------------------------------
+# Template Fallback
+
 def template_engine(topic, tone):
     hooks = [
-        f"The truth about {topic} is surprising.",
-        f"Why everyone is suddenly talking about {topic}.",
-        f"Here’s what nobody tells you about {topic}.",
+        f"The truth about {topic} will shock you…",
+        f"Nobody is talking about {topic}, but they should…",
+        f"{topic}: what you MUST know today."
     ]
     scripts = [
-        f"{topic} is more important than most people realize. Here's why…",
-        f"Most people misunderstand {topic}. Let's fix that…",
-        f"Let’s break down {topic} into something simple and powerful.",
+        f"Here's something people misunderstand about {topic}…",
+        f"Breaking down {topic} in the simplest way possible…",
+        f"What you never realized about {topic}…"
     ]
-    ctas = [
-        "Follow for more insights!",
-        "Save this for later.",
-        "Share this with someone who needs it.",
-    ]
+    ctas = ["Follow for more 🔥", "Save this!", "Share this with someone"]
 
     return {
         "hook": random.choice(hooks),
-        "caption": f"{topic} explained in a {tone.lower()} tone.",
+        "caption": f"{topic} explained with a {tone.lower()} vibe.",
         "script": random.choice(scripts),
         "cta": random.choice(ctas),
-        "hashtags": f"#{topic.replace(' ', '')} #viral #creator #growth #motivation",
-        "image_prompt": f"High-quality car image representing {topic}",
-        "schedule": "Best time: Wednesday • 7 PM",
+        "hashtags": f"#{topic.replace(' ', '')} #viral #content #growth",
+        "image_prompt": f"Cinematic car-themed visual for {topic}",
+        "schedule": "Best time: Wednesday • 7 PM"
     }
 
-# -----------------------------------------------------------
-# Generate Content (Model or Fallback)
-# -----------------------------------------------------------
+# Generator Logic
+
 def generate_content(topic, tone, length):
     if generator_model:
         try:
-            text = generator_model(
+            txt = generator_model(
                 f"Write social media content about {topic} in {tone} tone.",
-                max_length=120
+                max_length=150
             )[0]["generated_text"]
 
             return {
-                "hook": text[:80],
-                "caption": text[:120],
-                "script": text[:150],
-                "cta": "Follow for more content!",
-                "hashtags": f"#{topic.replace(' ', '')} #viral #creator",
-                "image_prompt": f"High-quality car image based on {topic}",
-                "schedule": "Best time: Friday • 9 PM",
+                "hook": txt[:80],
+                "caption": txt[:120],
+                "script": txt[:150],
+                "cta": "Follow for more!",
+                "hashtags": f"#{topic.replace(' ', '')} #viral #trending",
+                "image_prompt": f"Car-themed visual inspired by {topic}",
+                "schedule": "Best time: Friday • 9 PM"
             }
         except:
             return template_engine(topic, tone)
 
     return template_engine(topic, tone)
 
-# -----------------------------------------------------------
-# Chatbot Logic (simple)
-# -----------------------------------------------------------
-def chatbot_reply(message):
-    msg = message.lower()
+# Chatbot
 
-    if "short" in msg:
-        return "Here is a shorter version: " + message[:50] + "..."
-    if "long" in msg:
-        return "Here is a longer version: " + message + " — with added detail."
-    if "improve" in msg:
-        return "Here is a cleaner improved version: " + message.capitalize()
-    if "help" in msg:
-        return "Ask me anything: rewrite, shorten, expand, improve, or format content."
+def chatbot_reply(msg):
+    m = msg.lower()
+    if "short" in m:
+        return "Short version: " + msg[:50] + "…"
+    if "long" in m:
+        return msg + " — adding more details as requested."
+    if "improve" in m:
+        return "Improved: " + msg.capitalize()
+    if "help" in m:
+        return "I can rewrite, expand, shorten, or clean your content."
+    return "Refined: " + msg
 
-    return "Here is a refined version: " + message
-
-# -----------------------------------------------------------
-# Tabs
-# -----------------------------------------------------------
+# UI Layout
 tab1, tab2 = st.tabs(["✨ Generator", "🤖 Chatbot"])
 
-# ===========================================================
-# TAB 1 — GENERATOR
-# ===========================================================
+# Generator Tab
 with tab1:
+    left, right = st.columns([2.4, 1])
 
-    left, right = st.columns([2.5, 1])
-
-    # LEFT SIDE TITLE
     with left:
         st.markdown('<h1 class="glow-title">AI SOCIAL MEDIA CONTENT CREATOR</h1>', unsafe_allow_html=True)
 
-    # RIGHT SIDE UI
     with right:
         st.markdown('<div class="glass-box">', unsafe_allow_html=True)
-
         topic = st.text_input("Enter Topic")
         tone = st.selectbox("Tone", ["Professional", "Casual", "Funny", "Inspirational", "Urgent"])
         length = st.selectbox("Length", ["Short", "Medium", "Long"])
-        count = st.number_input("Number of Variations", min_value=1, max_value=10, value=1)
-
-        generate_button = st.button("Generate Content ✨")
-
+        count = st.number_input("Variations", min_value=1, max_value=10, value=1)
+        generate = st.button("Generate ✨")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # OUTPUT
     with left:
-        if generate_button:
+        if generate:
             if not topic.strip():
                 st.warning("Please enter a topic!")
             else:
@@ -209,8 +171,7 @@ with tab1:
                     results.append(data)
 
                     st.markdown('<div class="glass-box">', unsafe_allow_html=True)
-                    st.subheader(f"📌 Variation {i + 1}")
-
+                    st.subheader(f"📌 Variation {i+1}")
                     st.write("**Hook:**", data["hook"])
                     st.write("**Caption:**", data["caption"])
                     st.write("**Script:**", data["script"])
@@ -218,30 +179,26 @@ with tab1:
                     st.write("**Hashtags:**", data["hashtags"])
                     st.write("**Image Prompt:**", data["image_prompt"])
                     st.write("**Best Posting Time:**", data["schedule"])
-
                     st.markdown('</div>', unsafe_allow_html=True)
 
-                # Export Buttons
                 df = pd.DataFrame(results)
                 st.download_button("Download CSV", df.to_csv(index=False), "content.csv")
                 st.download_button("Download JSON", df.to_json(orient="records"), "content.json")
 
-# ===========================================================
-# TAB 2 — CHATBOT
-# ===========================================================
+# Chatbot Tab
 with tab2:
     st.markdown('<h1 class="glow-title">AI Chatbot</h1>', unsafe_allow_html=True)
 
     if "history" not in st.session_state:
         st.session_state.history = []
 
-    user_text = st.text_input("Your Message", key="chat_input")
+    user_msg = st.text_input("Your Message", key="chat_msg")
 
-    if st.button("Send", key="send_btn"):
-        if user_text.strip():
-            st.session_state.history.append(("You", user_text))
-            reply = chatbot_reply(user_text)
-            st.session_state.history.append(("AI", reply))
+    if st.button("Send"):
+        if user_msg.strip():
+            st.session_state.history.append(("You", user_msg))
+            ans = chatbot_reply(user_msg)
+            st.session_state.history.append(("AI", ans))
 
-    for role, msg in st.session_state.history:
-        st.write(f"**{role}:** {msg}")
+    for role, message in st.session_state.history:
+        st.write(f"**{role}:** {message}")
