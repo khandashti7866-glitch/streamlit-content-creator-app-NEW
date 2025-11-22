@@ -1,6 +1,8 @@
 streamlit
 pandas
 numpy
-torch          # optional, for transformer
-transformers   # optional, for transformer
-googletrans==4.0.0rc1  # optional, for Urdu translation
+# Optional for local model (recommended if you want model generation):
+transformers
+torch
+# Pillow may be useful for image handling (optional)
+pillow
