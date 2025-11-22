@@ -1,8 +1,9 @@
 # -----------------------------------------------------------
-# AI SOCIAL MEDIA CONTENT CREATOR – CHATBOT EDITION
+# AI SOCIAL MEDIA CONTENT CREATOR – CHATBOT
 # -----------------------------------------------------------
 
 import streamlit as st
+from transformers import pipeline, set_seed
 import random
 
 # -----------------------------------------------------------
@@ -14,7 +15,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------
-# Background + Styling
+# Styling
 # -----------------------------------------------------------
 def apply_theme():
     st.markdown(
@@ -68,22 +69,28 @@ def apply_theme():
 apply_theme()
 
 # -----------------------------------------------------------
-# Simple Content Generator
+# Load Model
 # -----------------------------------------------------------
-def generate_content(user_input):
-    """
-    This simple generator handles:
-    - "write X motivational quotes"
-    - "generate X captions"
-    - "create X scripts"
-    """
-    user_input = user_input.lower()
+@st.cache_resource
+def load_model():
+    try:
+        generator = pipeline("text-generation", model="distilgpt2")
+        set_seed(42)
+        return generator
+    except:
+        return None
 
-    number = 5  # default
+generator_model = load_model()
+
+# -----------------------------------------------------------
+# Simple Template Fallback
+# -----------------------------------------------------------
+def fallback_response(user_input):
+    number = 5
     if any(char.isdigit() for char in user_input):
         number = int(''.join(filter(str.isdigit, user_input)))
 
-    if "quote" in user_input:
+    if "quote" in user_input.lower():
         quotes = [
             "Believe in yourself!",
             "Every day is a second chance.",
@@ -96,42 +103,37 @@ def generate_content(user_input):
             "Dream bigger. Do bigger.",
             "Stay positive, work hard, make it happen."
         ]
-        return random.sample(quotes, min(number, len(quotes)))
+        return "\n".join(random.sample(quotes, min(number, len(quotes))))
 
-    elif "caption" in user_input:
-        captions = [
-            "Life is better when you smile 😄",
-            "Adventure awaits! ✈️",
-            "Coffee in hand, sparkle in my eye ☕✨",
-            "Chasing dreams, not followers 💫",
-            "Create your own sunshine ☀️",
-            "Good vibes only ✌️",
-            "Work hard, play harder 🎯",
-            "Smile, it confuses people 😎",
-            "Believe you can and you're halfway there 🌟",
-            "Make today ridiculously amazing 💥"
-        ]
-        return random.sample(captions, min(number, len(captions)))
-
-    else:
-        return [f"Generated content {i+1}" for i in range(number)]
+    return f"Here's your generated content based on: {user_input}"
 
 # -----------------------------------------------------------
-# Main App UI
+# Chatbot Logic
 # -----------------------------------------------------------
+if "history" not in st.session_state:
+    st.session_state.history = []
+
 st.markdown('<h1 class="glow-title">AI SOCIAL MEDIA CONTENT CREATOR</h1>', unsafe_allow_html=True)
-st.markdown('<div class="glass-box">', unsafe_allow_html=True)
 
-user_input = st.text_input("Enter your request, e.g., 'write 10 motivational quotes'")
+user_input = st.text_input("Type your request:")
 
-if st.button("Generate ✨"):
-    if not user_input.strip():
-        st.warning("Please enter a request!")
-    else:
-        results = generate_content(user_input)
-        for i, res in enumerate(results):
-            st.markdown('<div class="glass-box">', unsafe_allow_html=True)
-            st.write(f"**{i+1}.** {res}")
-            st.markdown('</div>', unsafe_allow_html=True)
+if st.button("Send"):
+    if user_input.strip():
+        st.session_state.history.append(("You", user_input))
 
-st.markdown('</div>', unsafe_allow_html=True)
+        # Generate response
+        if generator_model:
+            try:
+                response = generator_model(user_input, max_length=150, num_return_sequences=1)[0]["generated_text"]
+            except:
+                response = fallback_response(user_input)
+        else:
+            response = fallback_response(user_input)
+
+        st.session_state.history.append(("AI", response))
+
+# Display conversation
+for role, msg in st.session_state.history:
+    st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+    st.write(f"**{role}:** {msg}")
+    st.markdown('</div>', unsafe_allow_html=True)
