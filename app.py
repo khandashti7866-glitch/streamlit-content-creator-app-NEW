@@ -1,7 +1,7 @@
 # -----------------------------------------------------------
 # AI SOCIAL MEDIA CONTENT CREATOR – VIP EDITION
 # -----------------------------------------------------------
-# ✔ Galaxy Background
+# ✔ Car Background
 # ✔ Gold & Black Premium Theme
 # ✔ Right-Side UI
 # ✔ Generator + Chatbot
@@ -32,14 +32,14 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------
-# Galaxy Background + VIP Styling
+# Car Background + VIP Styling
 # -----------------------------------------------------------
 def apply_theme():
     st.markdown(
         """
         <style>
         .stApp {
-            background-image: url('https://i.imgur.com/ULaJtYH.jpeg');
+            background-image: url('https://images.unsplash.com/photo-1614087403036-cf2e2c0a7bfa?auto=format&fit=crop&w=1470&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -112,7 +112,7 @@ def template_engine(topic, tone):
     ]
     ctas = [
         "Follow for more insights!",
-        "Save this for later.",
+        "Save this for later",
         "Share this with someone who needs it.",
     ]
 
@@ -122,7 +122,7 @@ def template_engine(topic, tone):
         "script": random.choice(scripts),
         "cta": random.choice(ctas),
         "hashtags": f"#{topic.replace(' ', '')} #viral #creator #growth #motivation",
-        "image_prompt": f"Cinematic galaxy artwork representing {topic}",
+        "image_prompt": f"Cinematic car artwork representing {topic}",
         "schedule": "Best time: Wednesday • 7 PM",
     }
 
@@ -143,7 +143,7 @@ def generate_content(topic, tone, length):
                 "script": text[:150],
                 "cta": "Follow for more content!",
                 "hashtags": f"#{topic.replace(' ', '')} #viral #creator",
-                "image_prompt": f"Futuristic galaxy-style image based on {topic}",
+                "image_prompt": f"Futuristic car-style image based on {topic}",
                 "schedule": "Best time: Friday • 9 PM",
             }
         except:
