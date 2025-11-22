@@ -1,28 +1,75 @@
 import streamlit as st
-from PIL import Image
-import base64
 
-# ---------------------------
+# -----------------------------------------
 # PAGE CONFIG
-# ---------------------------
+# -----------------------------------------
 st.set_page_config(
-    page_title="Social Media Content Creator",
+    page_title="AI Content Creator",
     page_icon="✨",
     layout="wide",
 )
 
-# ---------------------------
-# BACKGROUND IMAGE FUNCTION
-# ---------------------------
-def add_bg_from_url(url):
+# -----------------------------------------
+# BACKGROUND IMAGE
+# -----------------------------------------
+def add_background(url):
     st.markdown(
         f"""
         <style>
         .stApp {{
             background-image: url("{url}");
             background-size: cover;
+            background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            color: white !important;
+        }}
+
+        /* Text shadow for readability */
+        h1, h2, h3, p, label, span {{
+            text-shadow: 0px 0px 12px rgba(0,0,0,0.9);
+        }}
+
+        /* Translucent black content box */
+        .glass-box {{
+            background: rgba(0,0,0,0.55);
+            padding: 25px;
+            border-radius: 18px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 25px rgba(0,0,0,0.4);
+        }}
+
+        /* Glow header */
+        .glow-title {{
+            font-size: 45px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 18px #4da8ff, 0 0 28px #0074ff;
+        }}
+
+        /* Input boxes translucent */
+        .stTextInput>div>div>input,
+        .stTextArea>div>textarea {{
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 10px;
+        }}
+
+        /* Buttons with smooth modern look */
+        .stButton>button {{
+            background: #007bff;
+            color: white;
+            border-radius: 10px;
+            padding: 10px 22px;
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(0,123,255,0.6);
+        }}
+
+        /* Sidebar dark overlay */
+        [data-testid="stSidebar"] {{
+            background: rgba(0,0,0,0.60);
+            backdrop-filter: blur(5px);
         }}
         </style>
         """,
@@ -30,81 +77,61 @@ def add_bg_from_url(url):
     )
 
 # Apply background
-add_bg_from_url("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1350&q=80")
+add_background("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1400&q=80")
 
 
-# ---------------------------
-# CUSTOM BLUE BOLD TEXT STYLE
-# ---------------------------
-st.markdown("""
-<style>
-.blue-bold {
-    color: #0074FF;
-    font-weight: 700;
-    font-size: 28px;
-}
-.normal-text {
-    color: white;
-    font-size: 18px;
-}
-.stButton>button {
-    background-color: #0074FF !important;
-    color: white !important;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-weight: 600;
-    border: none;
-}
-.stTextInput>div>div>input {
-    background-color: rgba(255,255,255,0.85);
-    color: #000;
-}
-.stTextArea>div>textarea {
-    background-color: rgba(255,255,255,0.85);
-    color: #000;
-}
-</style>
-""", unsafe_allow_html=True)
+# -----------------------------------------
+# SIDEBAR (UI options remain on right)
+# -----------------------------------------
+with st.sidebar:
+    st.markdown("### ✨ Options")
+    st.write("Adjust your content style:")
+    tone = st.selectbox("Select Tone", ["Professional", "Casual", "Funny", "Inspirational", "Emotional"])
+    length = st.selectbox("Content Length", ["Short", "Medium", "Long"])
 
 
-# ---------------------------
-# APP HEADING
-# ---------------------------
-st.markdown('<h1 class="blue-bold">✨ Social Media Content Creator App</h1>', unsafe_allow_html=True)
-st.markdown('<p class="normal-text">Create high-quality content instantly — no API keys needed.</p>', unsafe_allow_html=True)
+# -----------------------------------------
+# MAIN UI
+# -----------------------------------------
+st.markdown('<h1 class="glow-title">AI Social Media Content Creator ✨</h1>', unsafe_allow_html=True)
 
+st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+topic = st.text_input("Enter your topic:", placeholder="e.g., How to stay motivated")
+st.markdown('</div>', unsafe_allow_html=True)
 
-# ---------------------------
-# USER INPUT
-# ---------------------------
-topic = st.text_input("Enter your topic:", "")
+generate = st.button("Generate Content")
 
-if st.button("Generate Content"):
+# -----------------------------------------
+# CONTENT GENERATION
+# -----------------------------------------
+if generate:
     if topic.strip() == "":
-        st.warning("Please enter a topic first!")
+        st.warning("Please enter a topic first.")
     else:
-        st.markdown(f'<h3 class="blue-bold">Generated Content for: {topic}</h3>', unsafe_allow_html=True)
+        st.markdown('<br>', unsafe_allow_html=True)
 
-        st.write("**Hook:**")
-        st.success(f"🔥 The real secret behind {topic} will shock you!")
+        st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+        st.markdown(f"## 🔥 Hook for: **{topic}**")
+        st.write(f"✨ The truth about **{topic}** will surprise you… stay with me!")
 
-        st.write("**Short Caption:**")
-        st.info(f"{topic} made simple — let’s break it down!")
+        st.markdown("## 📝 Caption")
+        st.write(f"{topic} simplified — here’s what nobody tells you.")
 
-        st.write("**Hashtags:**")
-        st.code(f"#{topic.replace(' ', '')} #Trending #ViralContent #CreatorTools")
-
-        st.write("**Content Script:**")
+        st.markdown("## 🎯 Script")
         st.write(
             f"""
-            {topic} is becoming more important every day.  
-            Here’s what most people don’t understand about it…  
-            And here's how you can use it to level up instantly.  
+            Most people misunderstand **{topic}**, but you don’t have to.  
+            Here’s the real secret behind it, and how you can apply it today…
             """
         )
 
-# ---------------------------
+        st.markdown("## 🏷 Hashtags")
+        st.code(f"#{topic.replace(' ', '')} #motivation #learning #success #creatorlife")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+# -----------------------------------------
 # FOOTER
-# ---------------------------
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown('<p class="normal-text">Powered by Your AI Content Engine ✨</p>', unsafe_allow_html=True)
+# -----------------------------------------
+st.markdown("<br><p style='text-align:center; opacity:0.8;'>✨ Powered by Your AI Engine ✨</p>", unsafe_allow_html=True)
