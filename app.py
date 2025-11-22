@@ -15,7 +15,7 @@ if not api_key:
     st.warning("Please enter your OpenAI API Key to continue.")
     st.stop()
 
-# Set API key
+# Set OpenAI API key
 openai.api_key = api_key
 
 # --- Sidebar Settings ---
@@ -58,16 +58,19 @@ if st.button("Generate Content"):
                 )
                 bot_reply = response.choices[0].message.content
 
-                # Save messages to session
+                # Save messages
                 st.session_state.messages.append(("You", user_input))
                 st.session_state.messages.append(("AI", bot_reply))
 
-            except openai.error.RateLimitError:
-                st.error("⚠️ Rate limit exceeded. Please wait a few seconds or check your OpenAI plan.")
-            except openai.error.OpenAIError as e:
-                st.error(f"⚠️ OpenAI error: {e}")
             except Exception as e:
-                st.error(f"⚠️ Unexpected error: {e}")
+                # Handle all errors, including rate limits
+                error_msg = str(e)
+                if "RateLimitError" in error_msg or "429" in error_msg:
+                    st.error("⚠️ Rate limit exceeded. Please wait a few seconds or check your OpenAI plan.")
+                elif "invalid_api_key" in error_msg:
+                    st.error("⚠️ Invalid API key. Please check your OpenAI API Key.")
+                else:
+                    st.error(f"⚠️ An unexpected error occurred: {error_msg}")
 
 # --- Display Chat History ---
 if st.session_state.messages:
