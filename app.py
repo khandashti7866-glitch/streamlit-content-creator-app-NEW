@@ -1,7 +1,7 @@
 # -----------------------------------------------------------
 # AI SOCIAL MEDIA CONTENT CREATOR – VIP EDITION
 # -----------------------------------------------------------
-# ✔ Galaxy Background
+# ✔ Car Background
 # ✔ Gold & Black Premium Theme
 # ✔ Right-Side UI
 # ✔ Generator + Chatbot
@@ -32,14 +32,14 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------
-# Galaxy Background + VIP Styling
+# Car Background + VIP Styling
 # -----------------------------------------------------------
 def apply_theme():
     st.markdown(
         """
         <style>
         .stApp {
-            background-image: url('https://i.imgur.com/ULaJtYH.jpeg');
+            background-image: url('https://images.unsplash.com/photo-1511918984145-48de785d4c4b?auto=format&fit=crop&w=1600&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -122,7 +122,7 @@ def template_engine(topic, tone):
         "script": random.choice(scripts),
         "cta": random.choice(ctas),
         "hashtags": f"#{topic.replace(' ', '')} #viral #creator #growth #motivation",
-        "image_prompt": f"Cinematic galaxy artwork representing {topic}",
+        "image_prompt": f"High-quality car image representing {topic}",
         "schedule": "Best time: Wednesday • 7 PM",
     }
 
@@ -143,7 +143,7 @@ def generate_content(topic, tone, length):
                 "script": text[:150],
                 "cta": "Follow for more content!",
                 "hashtags": f"#{topic.replace(' ', '')} #viral #creator",
-                "image_prompt": f"Futuristic galaxy-style image based on {topic}",
+                "image_prompt": f"High-quality car image based on {topic}",
                 "schedule": "Best time: Friday • 9 PM",
             }
         except:
@@ -224,7 +224,7 @@ with tab1:
                 # Export Buttons
                 df = pd.DataFrame(results)
                 st.download_button("Download CSV", df.to_csv(index=False), "content.csv")
-                st.download_button("Download JSON", df.to_json(), "content.json")
+                st.download_button("Download JSON", df.to_json(orient="records"), "content.json")
 
 # ===========================================================
 # TAB 2 — CHATBOT
@@ -235,12 +235,13 @@ with tab2:
     if "history" not in st.session_state:
         st.session_state.history = []
 
-    user_text = st.text_input("Your Message")
+    user_text = st.text_input("Your Message", key="chat_input")
 
-    if st.button("Send"):
-        st.session_state.history.append(("You", user_text))
-        reply = chatbot_reply(user_text)
-        st.session_state.history.append(("AI", reply))
+    if st.button("Send", key="send_btn"):
+        if user_text.strip():
+            st.session_state.history.append(("You", user_text))
+            reply = chatbot_reply(user_text)
+            st.session_state.history.append(("AI", reply))
 
     for role, msg in st.session_state.history:
         st.write(f"**{role}:** {msg}")
