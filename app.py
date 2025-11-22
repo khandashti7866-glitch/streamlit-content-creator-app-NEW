@@ -1,243 +1,246 @@
-"""
-VIP Social Media Content Creator - Single-file Streamlit App (app.py)
+# -----------------------------------------------------------
+# AI SOCIAL MEDIA CONTENT CREATOR – VIP EDITION
+# -----------------------------------------------------------
+# ✔ Galaxy Background
+# ✔ Gold & Black Premium Theme
+# ✔ Right-Side UI
+# ✔ Generator + Chatbot
+# ✔ Export CSV/JSON
+# ✔ Optional Local Model (distilgpt2)
+# ✔ No API Keys Needed
+# -----------------------------------------------------------
 
-Features:
-- Right-side UI panel (controls) + left output area (results)
-- Tabs: Generator & Chatbot
-- Black & Gold VIP theme with fullscreen background & glass panels
-- Optional local transformer model (sshleifer/tiny-gpt2 or distilgpt2). If unavailable, automatic deterministic template fallback.
-- Generates multiple variants (1-10) with: post text, hashtags, hook, CTA, image prompt, short video script, posting time, reading time, char count, confidence
-- Chatbot mode with professional writing assistant personality (local model OR deterministic transformations)
-- Export CSV / JSON; per-variant Regenerate; Copy-to-clipboard; clipboard log downloadable
-- No external API keys required; works fully offline (except optional model download)
-- Good error handling - always returns variants via fallback
-
-How to run (short):
-1. python -m venv venv
-2. pip activate venv  # or source venv/bin/activate
-3. pip install -r requirements.txt
-4. streamlit run app.py
-
-Notes:
-- transformers & torch are optional. If present the app will try to load a small model.
-- The app will attempt to download the model if not present (internet) but will still work if download fails.
-- This is a single-file app; edit constants below to change default model or visuals.
-"""
-
-# -------------------------
-# Requirements (for requirements.txt file)
-# -------------------------
-# streamlit
-# pandas
-# numpy
-# transformers  # optional
-# torch         # optional
-# pillow        # optional
-
-# -------------------------
-# Imports
-# -------------------------
 import streamlit as st
 import pandas as pd
-import numpy as np
+import json
 import random
 import re
-import time
-from datetime import datetime
-from typing import List, Dict, Any, Optional
 
-# Optional dependencies - handled gracefully
-TRANSFORMERS_AVAILABLE = False
-MODEL_LOADED = False
-model = None
-tokenizer = None
-
+# Optional model
 try:
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    TRANSFORMERS_AVAILABLE = True
-except Exception:
-    TRANSFORMERS_AVAILABLE = False
+    from transformers import pipeline
+    MODEL_READY = True
+except:
+    MODEL_READY = False
 
-# -------------------------
-# App Config & Constants
-# -------------------------
-BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1526378723480-1d2f3c4d3d4f?auto=format&fit=crop&w=1600&q=80"  # Tech background
-MODEL_NAME = "sshleifer/tiny-gpt2"
-MAX_MODEL_TOKENS = 150
-MIN_VARIANTS = 1
-MAX_VARIANTS = 10
-STOPWORDS = set(["the","and","is","in","to","a","of","for","on","with","that","this","are","it","as","be","by","an","from","at","or","your","you"])
+# -----------------------------------------------------------
+# Streamlit Page Config
+# -----------------------------------------------------------
+st.set_page_config(
+    page_title="AI SOCIAL MEDIA CONTENT CREATOR",
+    layout="wide"
+)
 
-# -------------------------
-# Load model if possible
-# -------------------------
-if TRANSFORMERS_AVAILABLE:
+# -----------------------------------------------------------
+# Galaxy Background + VIP Styling
+# -----------------------------------------------------------
+def apply_theme():
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-image: url('https://i.imgur.com/ULaJtYH.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white !important;
+            font-family: 'Segoe UI';
+        }
+
+        .glass-box {
+            background: rgba(0,0,0,0.55);
+            padding: 22px;
+            border-radius: 18px;
+            backdrop-filter: blur(7px);
+            box-shadow: 0 0 18px rgba(255,215,0,0.4);
+        }
+
+        .glow-title {
+            font-size: 46px;
+            font-weight: 900;
+            color: gold;
+            text-shadow: 0 0 20px gold, 0 0 40px #ffdd55;
+        }
+
+        .stButton>button {
+            background: gold !important;
+            color: black !important;
+            border-radius: 10px;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            box-shadow: 0 0 12px gold;
+        }
+
+        .stTextInput>div>div>input,
+        .stSelectbox>div>div>div,
+        .stTextArea>div>textarea {
+            background: rgba(255,255,255,0.18);
+            color: white !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+apply_theme()
+
+# -----------------------------------------------------------
+# Optional Local Model Load
+# -----------------------------------------------------------
+generator_model = None
+
+if MODEL_READY:
     try:
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model.to(device)
-        MODEL_LOADED = True
-    except Exception as e:
-        MODEL_LOADED = False
-        print("Transformer model not loaded. Using fallback. Reason:", e)
+        generator_model = pipeline("text-generation", model="distilgpt2")
+    except:
+        generator_model = None
 
-# -------------------------
-# Utility functions
-# -------------------------
-def css() -> None:
-    st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: url("{BACKGROUND_IMAGE}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        color: #efefef;
-    }}
-    h1,h2,h3,p,label,span {{ text-shadow:0 2px 12px rgba(0,0,0,0.85); }}
-    .glass {{ background: linear-gradient(180deg, rgba(6,6,6,0.72), rgba(14,14,14,0.60)); border:1px solid rgba(255,215,0,0.12); padding:18px; border-radius:14px; backdrop-filter:blur(6px); box-shadow:0 8px 30px rgba(0,0,0,0.6); color:#fff; }}
-    .gold-title {{ font-size:36px; font-weight:800; color:#ffd166; text-shadow:0 0 18px rgba(255,209,102,0.28),0 0 6px rgba(0,0,0,0.6); margin-bottom:6px; }}
-    .gold-sub {{ color:#ffd166; opacity:0.9; margin-top:-8px; margin-bottom:12px; }}
-    .control-panel {{ background: rgba(10,10,10,0.6); border-radius:12px; padding:14px; border:1px solid rgba(255,215,0,0.08); }}
-    .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div {{ background: rgba(255,255,255,0.06); color:#fff; border-radius:8px; padding:8px; }}
-    .stButton>button {{ background: linear-gradient(90deg,#ffd166,#ffb703); color:#08111a; font-weight:800; border-radius:10px; padding:8px 18px; border:none; box-shadow:0 6px 18px rgba(255,181,3,0.18); }}
-    .variant-card {{ background: linear-gradient(180deg, rgba(0,0,0,0.42), rgba(6,6,6,0.52)); border-radius:12px; padding:12px; margin-bottom:12px; border:1px solid rgba(255,215,0,0.06); }}
-    .meta {{ color:#e7e7e7; opacity:0.88; font-size:13px; }}
-    </style>
-    """, unsafe_allow_html=True)
+# -----------------------------------------------------------
+# Template-Based Generator (Fallback)
+# -----------------------------------------------------------
+def template_engine(topic, tone):
+    hooks = [
+        f"The truth about {topic} is surprising.",
+        f"Why everyone is suddenly talking about {topic}.",
+        f"Here’s what nobody tells you about {topic}.",
+    ]
+    scripts = [
+        f"{topic} is more important than most people realize. Here's why…",
+        f"Most people misunderstand {topic}. Let's fix that…",
+        f"Let’s break down {topic} into something simple and powerful.",
+    ]
+    ctas = [
+        "Follow for more insights!",
+        "Save this for later.",
+        "Share this with someone who needs it.",
+    ]
 
-def extract_keywords(text: str, max_keywords: int = 8) -> List[str]:
-    toks = re.findall(r"\w+", text.lower())
-    toks = [t for t in toks if t not in STOPWORDS and len(t)>2]
-    freqs = {}
-    for t in toks:
-        freqs[t] = freqs.get(t,0)+1
-    sorted_tokens = sorted(freqs.items(), key=lambda x:(-x[1],x[0]))
-    return [t for t,_ in sorted_tokens][:max_keywords]
+    return {
+        "hook": random.choice(hooks),
+        "caption": f"{topic} explained in a {tone.lower()} tone.",
+        "script": random.choice(scripts),
+        "cta": random.choice(ctas),
+        "hashtags": f"#{topic.replace(' ', '')} #viral #creator #growth #motivation",
+        "image_prompt": f"Cinematic galaxy artwork representing {topic}",
+        "schedule": "Best time: Wednesday • 7 PM",
+    }
 
-def generate_hashtags_from_keywords(keywords: List[str], min_tags: int=5, max_tags:int=12)->List[str]:
-    tags = ["#"+re.sub(r"[^A-Za-z0-9]","",k) for k in keywords if k]
-    extras = ["#viral","#trending","#contentcreator","#tips","#howto","#learn"]
-    random.shuffle(extras)
-    tags = tags + extras[:max(0,min_tags-len(tags))]
-    return tags[:max_tags]
+# -----------------------------------------------------------
+# Generate Content (Model or Fallback)
+# -----------------------------------------------------------
+def generate_content(topic, tone, length):
+    if generator_model:
+        try:
+            text = generator_model(
+                f"Write social media content about {topic} in {tone} tone.",
+                max_length=120
+            )[0]["generated_text"]
 
-def simple_posting_schedule(topic:str)->str:
-    low = topic.lower()
-    hours = [9,11,14,17,19,21]
-    day = random.choice(["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"])
-    if any(k in low for k in ["business","productivity","career","finance","invest"]):
-        day = random.choice(["Tuesday","Wednesday","Thursday"])
-    elif any(k in low for k in ["life","fun","travel","food","fashion","music"]):
-        day = random.choice(["Friday","Saturday","Sunday"])
-    return f"{day} at {random.choice(hours)}:00"
+            return {
+                "hook": text[:80],
+                "caption": text[:120],
+                "script": text[:150],
+                "cta": "Follow for more content!",
+                "hashtags": f"#{topic.replace(' ', '')} #viral #creator",
+                "image_prompt": f"Futuristic galaxy-style image based on {topic}",
+                "schedule": "Best time: Friday • 9 PM",
+            }
+        except:
+            return template_engine(topic, tone)
 
-def estimate_reading_time(text:str)->str:
-    words = len(re.findall(r"\w+",text))
-    minutes = max(1,int(words/200))
-    return f"{minutes} min"
+    return template_engine(topic, tone)
 
-def truncate_to_length(text:str,max_chars:int)->str:
-    if len(text)<=max_chars: return text
-    cut=text[:max_chars].rfind(".")
-    if cut==-1: cut=text[:max_chars].rfind(" ")
-    if cut==-1 or cut<max_chars//2: return text[:max_chars].rstrip()+"…"
-    return text[:cut+1]
+# -----------------------------------------------------------
+# Chatbot Logic (simple)
+# -----------------------------------------------------------
+def chatbot_reply(message):
+    msg = message.lower()
 
-# -------------------------
-# Fallback template generator
-# -------------------------
-def template_generator(topic:str, tone:str, platform:str, length_chars:int)->Dict[str,Any]:
-    kw = extract_keywords(topic,6)
-    hashtags = generate_hashtags_from_keywords(kw)
-    hooks = {"Professional":[f"Industry insight: {topic} — what professionals must know.", f"Brief update on {topic} that impacts many industries."],
-             "Casual":[f"Quick tip about {topic} you can use today!", f"Real talk: {topic} explained simply."],
-             "Funny":[f"If {topic} were a person, here's what they'd say...", f"Fun facts (and laughs) about {topic}."],
-             "Inspirational":[f"How {topic} changed the game for many people.", f"One idea that might change your view about {topic}."],
-             "Urgent":[f"Important! {topic} updates you need to act on.", f"Alert: new {topic} shifts happening now."]}
-    ctas = ["Learn more","Share your thoughts","Save this post","Try this now","Join the conversation"]
-    images = [f"Professional photo representing {topic}", f"Minimalist editorial photo focused on {topic}"]
-    scripts = [f"{topic} in 30 seconds: key steps are A,B,C","Quick tip on {topic}. First... Next... Finally..."]
-    hook = random.choice(hooks.get(tone,hooks["Professional"]))
-    cta = random.choice(ctas)
-    image_prompt = random.choice(images)
-    script = random.choice(scripts)
-    post_text = truncate_to_length(f"{hook} {topic}. {cta}.", length_chars)
-    return {"post":post_text, "hashtags":hashtags, "hook":hook, "cta":cta, "image_prompt":image_prompt, "video_script":script, "posting_time":simple_posting_schedule(topic), "reading_time":estimate_reading_time(post_text), "char_count":len(post_text), "confidence":"template"}
+    if "short" in msg:
+        return "Here is a shorter version: " + message[:50] + "..."
+    if "long" in msg:
+        return "Here is a longer version: " + message + " — with added detail."
+    if "improve" in msg:
+        return "Here is a cleaner improved version: " + message.capitalize()
+    if "help" in msg:
+        return "Ask me anything: rewrite, shorten, expand, improve, or format content."
 
-def generate_variants(topic:str, tone:str, platform:str, length_pref:str, n_variants:int, keywords_input:str)->List[Dict[str,Any]]:
-    length_map={"Short":120,"Medium":300,"Long":800}
-    max_chars=length_map.get(length_pref,300)
-    user_kws=[k.strip() for k in re.split(r"[,\n;]+",keywords_input) if k.strip()]
-    variants=[]
-    for i in range(n_variants):
-        variant=template_generator(topic,tone,platform,max_chars)
-        if user_kws:
-            user_tags=["#"+re.sub(r"\s+","",k) for k in user_kws][:4]
-            variant["hashtags"]=list(dict.fromkeys(user_tags+variant["hashtags"]))
-        variants.append(variant)
-    return variants
+    return "Here is a refined version: " + message
 
-# -------------------------
-# Streamlit UI
-# -------------------------
-st.set_page_config(page_title="AI SOCIAL MEDIA CONTENT CREATOR", layout="wide")
-css()
+# -----------------------------------------------------------
+# Tabs
+# -----------------------------------------------------------
+tab1, tab2 = st.tabs(["✨ Generator", "🤖 Chatbot"])
 
-if "variants" not in st.session_state: st.session_state.variants=[]
-if "chat_history" not in st.session_state: st.session_state.chat_history=[]
+# ===========================================================
+# TAB 1 — GENERATOR
+# ===========================================================
+with tab1:
 
-left_col,right_col=st.columns([2.6,1])
+    left, right = st.columns([2.5, 1])
 
-with right_col:
-    st.markdown('<div class="control-panel glass">',unsafe_allow_html=True)
-    topic_input = st.text_input("Topic / Idea","e.g., AI marketing tips")
-    platform = st.selectbox("Platform",["Instagram","YouTube Shorts","Twitter/X","LinkedIn","Facebook","TikTok"])
-    tone = st.selectbox("Tone",["Professional","Casual","Funny","Inspirational","Urgent"])
-    length_pref = st.selectbox("Post length",["Short","Medium","Long"])
-    num_variants = st.slider("Variations",1,10,3)
-    kw_input = st.text_area("Optional keywords / hashtags",height=60)
-    gen_btn = st.button("Generate ✨")
-    clear_btn = st.button("Clear Output")
-    st.markdown("</div>",unsafe_allow_html=True)
+    # LEFT SIDE TITLE
+    with left:
+        st.markdown('<h1 class="glow-title">AI SOCIAL MEDIA CONTENT CREATOR</h1>', unsafe_allow_html=True)
 
-with left_col:
-    tabs=st.tabs(["Generator","Chatbot"])
-    with tabs[0]:
-        st.markdown('<div class="glass">',unsafe_allow_html=True)
-        if gen_btn:
-            if not topic_input.strip(): st.warning("Enter a topic first.")
+    # RIGHT SIDE UI
+    with right:
+        st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+
+        topic = st.text_input("Enter Topic")
+        tone = st.selectbox("Tone", ["Professional", "Casual", "Funny", "Inspirational", "Urgent"])
+        length = st.selectbox("Length", ["Short", "Medium", "Long"])
+        count = st.number_input("Number of Variations", min_value=1, max_value=10, value=1)
+
+        generate_button = st.button("Generate Content ✨")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # OUTPUT
+    with left:
+        if generate_button:
+            if not topic.strip():
+                st.warning("Please enter a topic!")
             else:
-                with st.spinner("Generating variants..."):
-                    st.session_state.variants=generate_variants(topic_input,tone,platform,length_pref,num_variants,kw_input)
-        if clear_btn: st.session_state.variants=[]
-        if not st.session_state.variants: st.info("No variants yet. Enter topic and press Generate.")
-        else:
-            for i,var in enumerate(st.session_state.variants):
-                st.markdown(f'<div class="variant-card">',unsafe_allow_html=True)
-                edited=st.text_area(f"Variant {i+1} Post Text",value=var["post"],height=110)
-                st.session_state.variants[i]["post"]=edited
-                st.write("Hashtags:", " ".join(var["hashtags"]))
-                st.write("Hook:",var["hook"])
-                st.write("CTA:",var["cta"])
-                st.write("Image prompt:",var["image_prompt"])
-                st.write("Video script:",var["video_script"])
-                st.write("Posting time:",var["posting_time"])
-                st.write("Reading time / chars:",f"{var['reading_time']} / {var['char_count']}")
-                st.write("Confidence:",var["confidence"])
-                st.markdown("</div>",unsafe_allow_html=True)
+                results = []
+                for i in range(count):
+                    data = generate_content(topic, tone, length)
+                    results.append(data)
 
-    with tabs[1]:
-        st.markdown('<div class="glass">',unsafe_allow_html=True)
-        st.text("Chatbot (Professional Assistant) - Type instructions like 'shorten', 'polish', 'add hashtags'")
-        user_cmd=st.text_input("Enter instruction",key="chat_input")
-        if st.button("Send to Assistant"):
-            if user_cmd.strip(): st.session_state.chat_history.append({"user":user_cmd,"bot":"Assistant replies here (fallback deterministic)."})
-        for entry in st.session_state.chat_history:
-            st.markdown(f"**You:** {entry['user']}")
-            st.markdown(f"**Assistant:** {entry['bot']}")
-st.markdown("### App Info (Debug)")
-st.write("Model loaded:",MODEL_LOADED)
-st.write("Transformers available:",TRANSFORMERS_AVAILABLE)
+                    st.markdown('<div class="glass-box">', unsafe_allow_html=True)
+                    st.subheader(f"📌 Variation {i + 1}")
+
+                    st.write("**Hook:**", data["hook"])
+                    st.write("**Caption:**", data["caption"])
+                    st.write("**Script:**", data["script"])
+                    st.write("**CTA:**", data["cta"])
+                    st.write("**Hashtags:**", data["hashtags"])
+                    st.write("**Image Prompt:**", data["image_prompt"])
+                    st.write("**Best Posting Time:**", data["schedule"])
+
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                # Export Buttons
+                df = pd.DataFrame(results)
+                st.download_button("Download CSV", df.to_csv(index=False), "content.csv")
+                st.download_button("Download JSON", df.to_json(), "content.json")
+
+# ===========================================================
+# TAB 2 — CHATBOT
+# ===========================================================
+with tab2:
+    st.markdown('<h1 class="glow-title">AI Chatbot</h1>', unsafe_allow_html=True)
+
+    if "history" not in st.session_state:
+        st.session_state.history = []
+
+    user_text = st.text_input("Your Message")
+
+    if st.button("Send"):
+        st.session_state.history.append(("You", user_text))
+        reply = chatbot_reply(user_text)
+        st.session_state.history.append(("AI", reply))
+
+    for role, msg in st.session_state.history:
+        st.write(f"**{role}:** {msg}")
