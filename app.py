@@ -1,7 +1,7 @@
 # -----------------------------------------------------------
 # AI SOCIAL MEDIA CONTENT CREATOR – VIP EDITION
 # -----------------------------------------------------------
-# ✔ Car Background
+# ✔ Car Background (Working)
 # ✔ Gold & Black Premium Theme
 # ✔ Right-Side UI
 # ✔ Generator + Chatbot
@@ -39,7 +39,7 @@ def apply_theme():
         """
         <style>
         .stApp {
-            background-image: url('https://images.unsplash.com/photo-1614087403036-cf2e2c0a7bfa?auto=format&fit=crop&w=1470&q=80');
+            background-image: url('https://images.unsplash.com/photo-1612790180833-11057bb992f4?auto=format&fit=crop&w=1470&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
