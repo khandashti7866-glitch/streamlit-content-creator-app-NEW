@@ -1,6 +1,5 @@
 import streamlit as st
-from openai import OpenAI
-from openai.error import RateLimitError, APIError, OpenAIError
+import openai
 
 # --- Streamlit App Setup ---
 st.set_page_config(page_title="Social Media Content Creator", page_icon="🤖", layout="wide")
@@ -16,7 +15,8 @@ if not api_key:
     st.warning("Please enter your OpenAI API Key to continue.")
     st.stop()
 
-client = OpenAI(api_key=api_key)
+# Set API key
+openai.api_key = api_key
 
 # --- Sidebar Settings ---
 st.sidebar.header("Settings")
@@ -49,9 +49,8 @@ if st.button("Generate Content"):
             4. Additional Content Ideas
             Make it suitable for social media engagement.
             """
-
             try:
-                response = client.chat.completions.create(
+                response = openai.ChatCompletion.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=temperature,
@@ -63,12 +62,10 @@ if st.button("Generate Content"):
                 st.session_state.messages.append(("You", user_input))
                 st.session_state.messages.append(("AI", bot_reply))
 
-            except RateLimitError:
+            except openai.error.RateLimitError:
                 st.error("⚠️ Rate limit exceeded. Please wait a few seconds or check your OpenAI plan.")
-            except APIError as e:
-                st.error(f"⚠️ OpenAI API Error: {e}")
-            except OpenAIError as e:
-                st.error(f"⚠️ An OpenAI error occurred: {e}")
+            except openai.error.OpenAIError as e:
+                st.error(f"⚠️ OpenAI error: {e}")
             except Exception as e:
                 st.error(f"⚠️ Unexpected error: {e}")
 
