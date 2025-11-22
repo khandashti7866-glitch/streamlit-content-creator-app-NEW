@@ -1,13 +1,5 @@
-# Core
-streamlit>=1.20
+streamlit>=1.25.0
 pandas
-numpy
-
-# Optional (only needed if you want transformer model generation)
-torch
 transformers
-
-# Optional for image handling / Pillow references (not strictly required)
-Pillow
-
-
+torch
+pyttsx3
