@@ -1,59 +1,61 @@
+import os
 import streamlit as st
-from transformers import pipeline, set_seed
+import openai  # We’ll use OpenAI-compatible calls, but point base_url to Groq
 
-# --- Streamlit Setup ---
-st.set_page_config(page_title="Offline Chatbot", page_icon="🤖", layout="wide")
-st.title("🤖 Social Media Content Creator (Offline)")
-st.markdown("This chatbot runs locally and does NOT require any API key.")
+# --- Streamlit setup ---
+st.set_page_config(page_title="Groq Chatbot", page_icon="🤖", layout="wide")
+st.title("🤖 Groq‑Powered Chatbot")
+st.markdown("Chat using Groq LLM via its API key (OpenAI-compatible)")
 
-# --- Initialize Local Model ---
-@st.cache_resource(show_spinner=True)
-def load_model():
-    generator = pipeline("text-generation", model="tiiuae/falcon-7b-instruct", device=0)  # set device=-1 for CPU
-    set_seed(42)
-    return generator
+# --- API Key Setup ---
+# Either read from env var
+groq_api_key = os.getenv("GROQ_API_KEY")
+if not groq_api_key:
+    groq_api_key = st.text_input("Enter your **Groq API Key**", type="password")
+if not groq_api_key:
+    st.warning("Please provide a Groq API Key to continue.")
+    st.stop()
 
-generator = load_model()
+# Configure openai client to use Groq's API base URL
+openai.api_key = groq_api_key
+openai.api_base = "https://api.groq.com/openai/v1"  # Groq's OpenAI-compatible endpoint :contentReference[oaicite:3]{index=3}
 
-# --- Initialize Chat History ---
+# --- Settings in Sidebar ---
+st.sidebar.header("Settings")
+model = st.sidebar.selectbox("Model", ["llama-3.3-70b-versatile", "llama3-8b-8192", "mixtral-8x7b-32768"])
+temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
+max_tokens = st.sidebar.slider("Max Tokens", 50, 2000, 500)
+
+# --- Chat History ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- User Input ---
-user_input = st.text_area("Enter your topic or question", key="input", height=100)
+# --- Input Area ---
+user_input = st.text_area("You:", height=120)
 
-# --- Generate Response ---
-if st.button("Generate Content"):
-    if not user_input.strip():
-        st.warning("Please enter a topic or question!")
-    else:
-        with st.spinner("Generating content locally..."):
-            prompt = f"""
-            You are a social media content creator AI.
-            Generate creative social media posts, captions, tweets, and content ideas for: {user_input}
-            """
+if st.button("Send"):
+    if user_input.strip():
+        st.session_state.messages.append(("User", user_input))
+        with st.spinner("Generating response from Groq..."):
             try:
-                result = generator(prompt, max_length=300, do_sample=True, temperature=0.7)
-                bot_reply = result[0]['generated_text']
-
-                st.session_state.messages.append(("You", user_input))
-                st.session_state.messages.append(("AI", bot_reply))
-
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[{"role": "user", "content": user_input}],
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                reply = response.choices[0].message.content
+                st.session_state.messages.append(("AI", reply))
             except Exception as e:
-                st.error(f"⚠️ An error occurred: {e}")
+                st.error(f"Error: {e}")
+    else:
+        st.warning("Please write something to send.")
 
-# --- Display Chat History ---
+# --- Display Chat --- 
 if st.session_state.messages:
     st.markdown("---")
     for sender, msg in st.session_state.messages:
-        if sender == "You":
+        if sender == "User":
             st.markdown(f"**You:** {msg}")
         else:
             st.markdown(f"**AI:** {msg}")
-            st.download_button(
-                label="📄 Copy AI Response",
-                data=msg,
-                file_name="ai_content.txt",
-                mime="text/plain",
-                key=f"download_{len(msg)}"
-            )
